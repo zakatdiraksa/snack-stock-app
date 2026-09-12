@@ -4,6 +4,7 @@ let orders = JSON.parse(localStorage.getItem('orders')) || [];
 let adminWhatsapp = localStorage.getItem('adminWhatsapp') || '';
 let isAdminLoggedIn = false;
 let cart = {};
+let currentProductPhoto = null; // Menyimpan foto produk yang dipilih
 
 const ADMIN_PASSWORD = 'admin123'; // Ganti dengan password yang lebih aman
 
@@ -11,9 +12,64 @@ const ADMIN_PASSWORD = 'admin123'; // Ganti dengan password yang lebih aman
 document.getElementById('customerMode').addEventListener('click', showCustomerMode);
 document.getElementById('adminMode').addEventListener('click', showAdminMode);
 
+// File upload event listener
+document.addEventListener('DOMContentLoaded', function() {
+    const photoInput = document.getElementById('productPhoto');
+    if (photoInput) {
+        photoInput.addEventListener('change', handlePhotoUpload);
+    }
+});
+
 // Initialize
 function init() {
     displayCustomerMode();
+}
+
+// === FILE UPLOAD HANDLER ===
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    
+    if (!file) {
+        clearPhotoPreview();
+        return;
+    }
+    
+    // Validasi file
+    if (!file.type.startsWith('image/')) {
+        alert('❌ File harus berupa gambar!');
+        event.target.value = '';
+        return;
+    }
+    
+    // Batas ukuran file 5MB
+    if (file.size > 5 * 1024 * 1024) {
+        alert('❌ Ukuran file terlalu besar! Maksimal 5MB');
+        event.target.value = '';
+        return;
+    }
+    
+    // Convert ke Base64
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentProductPhoto = e.target.result; // Menyimpan base64 string
+        displayPhotoPreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function displayPhotoPreview(imageSrc) {
+    const previewDiv = document.getElementById('photoPreview');
+    const previewImg = document.getElementById('previewImage');
+    
+    previewImg.src = imageSrc;
+    previewDiv.classList.remove('hidden');
+}
+
+function clearPhotoPreview() {
+    currentProductPhoto = null;
+    document.getElementById('productPhoto').value = '';
+    document.getElementById('photoPreview').classList.add('hidden');
+    document.getElementById('previewImage').src = '';
 }
 
 // === MODE MANAGEMENT ===
@@ -77,20 +133,19 @@ function showAdminDashboard() {
 // === PRODUCT MANAGEMENT (ADMIN) ===
 function addProduct() {
     const name = document.getElementById('productName').value;
-    const photo = document.getElementById('productPhoto').value;
     const price = parseFloat(document.getElementById('productPrice').value);
     const unit = document.getElementById('priceUnit').value;
     const stock = parseInt(document.getElementById('productStock').value);
     
-    if (!name || !photo || !price || !unit || !stock) {
-        alert('❌ Semua field harus diisi!');
+    if (!name || !currentProductPhoto || !price || !unit || !stock) {
+        alert('❌ Semua field harus diisi! Pastikan foto sudah dipilih.');
         return;
     }
     
     const product = {
         id: Date.now(),
         name,
-        photo,
+        photo: currentProductPhoto, // Menyimpan base64 string
         price,
         unit,
         stock
@@ -101,10 +156,11 @@ function addProduct() {
     
     // Clear form
     document.getElementById('productName').value = '';
-    document.getElementById('productPhoto').value = '';
     document.getElementById('productPrice').value = '';
     document.getElementById('priceUnit').value = '';
     document.getElementById('productStock').value = '';
+    clearPhotoPreview();
+    currentProductPhoto = null;
     
     displayAdminProducts();
     alert('✅ Produk berhasil ditambahkan!');
@@ -147,10 +203,13 @@ function editProduct(id) {
     const product = products.find(p => p.id === id);
     if (product) {
         document.getElementById('productName').value = product.name;
-        document.getElementById('productPhoto').value = product.photo;
         document.getElementById('productPrice').value = product.price;
         document.getElementById('priceUnit').value = product.unit;
         document.getElementById('productStock').value = product.stock;
+        
+        // Tampilkan preview foto
+        currentProductPhoto = product.photo;
+        displayPhotoPreview(product.photo);
         
         // Hapus produk lama dan tunggu input baru
         products = products.filter(p => p.id !== id);
