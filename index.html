@@ -42,7 +42,19 @@
                 <h3>➕ Tambah Produk Baru</h3>
                 <div class="form-group">
                     <input type="text" id="productName" placeholder="Nama Produk" />
-                    <input type="text" id="productPhoto" placeholder="URL Foto Produk" />
+                    
+                    <!-- File Upload untuk Foto -->
+                    <div class="file-upload-container">
+                        <label for="productPhoto" class="file-upload-label">
+                            📷 Pilih Foto Produk
+                        </label>
+                        <input type="file" id="productPhoto" accept="image/*" capture="environment" />
+                        <div id="photoPreview" class="photo-preview hidden">
+                            <img id="previewImage" src="" alt="Preview" />
+                            <button type="button" onclick="clearPhotoPreview()" class="btn-clear">❌ Hapus Foto</button>
+                        </div>
+                    </div>
+                    
                     <input type="number" id="productPrice" placeholder="Harga" />
                     <input type="text" id="priceUnit" placeholder="Satuan (kg/pcs/bungkus)" />
                     <input type="number" id="productStock" placeholder="Jumlah Stock" />
